@@ -20,10 +20,8 @@ use Illuminate\Support\Facades\Route;
 // ── Dashboard ─────────────────────────────────────────────────────────
 Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
 
-// ── Products ──────────────────────────────────────────────────────────
-Route::get('/products',        [ProductController::class, 'index'])->name('products.index');
-Route::get('/products/create', [ProductController::class, 'create'])->name('products.create');
-Route::post('/products',       [ProductController::class, 'store'])->name('products.store');
+// ── Products (full CRUD) ──────────────────────────────────────────────
+Route::resource('products', ProductController::class);
 
 // ── Sales ─────────────────────────────────────────────────────────────
 Route::get('/sales',        [SaleController::class, 'index'])->name('sales.index');

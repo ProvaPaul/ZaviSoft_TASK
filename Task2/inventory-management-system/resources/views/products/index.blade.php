@@ -28,6 +28,7 @@
                                 <th>Sell Price</th>
                                 <th>Stock</th>
                                 <th>Created</th>
+                                <th class="text-center">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -47,6 +48,25 @@
                                         @endif
                                     </td>
                                     <td>{{ $product->created_at->format('d M, Y') }}</td>
+                                    <td class="text-center">
+                                        <div class="d-inline-flex gap-1">
+                                            {{-- Edit Button --}}
+                                            <a href="{{ route('products.edit', $product) }}" class="btn btn-sm btn-outline-primary"
+                                                title="Edit">
+                                                <i class="bi bi-pencil-square"></i>
+                                            </a>
+
+                                            {{-- Delete Button --}}
+                                            <form action="{{ route('products.destroy', $product) }}" method="POST" class="d-inline"
+                                                onsubmit="return confirm('Are you sure you want to delete this product?')">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete">
+                                                    <i class="bi bi-trash"></i>
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </td>
                                 </tr>
                             @endforeach
                         </tbody>
