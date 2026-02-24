@@ -1,149 +1,16 @@
-# SSO Implementation Guide - Ecommerce App (OAuth2 Authorization Server)
+# SSO Implementation Guide — Ecommerce App (OAuth2 Authorization Server)
 
-This document describes the complete Single Sign-On (SSO) implementation where the **ecommerce-app** acts as an OAuth2 Authorization Server using Laravel Passport. Users logged into the Ecommerce system can seamlessly access the **foodpanda-app** without re-entering credentials.
-
----
-
-## Quick Start — Login & See the Project
-
-**Demo credentials** (after running `php artisan db:seed`):
-
-- **Email:** `admin@ecommerce.test`
-- **Password:** `password`
-
-**Or register a new account** at `/register`.
-
-1. Visit `http://localhost:8000` (or your server URL)
-2. Click **Log in** or **Create Account**
-3. Use demo credentials OR register
-4. You'll land on the **Dashboard** with the "Go to Foodpanda" button
+This document describes the complete Single Sign-On (SSO) implementation where **ecommerce-app** acts as an OAuth2 Authorization Server using Laravel Passport. Users logged into the Ecommerce system can seamlessly access **foodpanda-app** without re-entering credentials.
 
 ---
 
-## PART 1 — Laravel Passport Installation & Configuration
+## Objective
 
-### Artisan Commands Executed
-
-```bash
-# 1. Install Laravel Passport
-composer require laravel/passport --ignore-platform-reqs
-
-# 2. Publish Passport migrations
-php artisan vendor:publish --tag=passport-migrations
-
-# 3. Run migrations (creates oauth_* tables)
-php artisan migrate
-
-# 4. Install Passport (generates keys, creates personal/password grant clients)
-php artisan passport:install
-
-# 5. (Optional) Publish Passport config
-php artisan vendor:publish --tag=passport-config
-```
-
-### Configuration Summary
-
-- **User Model**: Uses `Laravel\Passport\HasApiTokens` trait (replaced Sanctum)
-- **API Guard**: `config/auth.php` — `api` guard uses `passport` driver
-- **Token Expiration**: `AuthServiceProvider` — Access: 1 hour, Refresh: 7 days
-- **Passport Routes**: Auto-registered at `/oauth/*` (authorize, token, etc.)
-
----
-
-## PART 2 — Protected API Route
-
-**Route**: `GET /api/user`  
-**Middleware**: `auth:api`  
-**Returns**: Authenticated user JSON
-
-Defined in `routes/api.php` and handled by `App\Http\Controllers\Api\UserController@show`.
-
----
-
-## PART 3 — Create OAuth Client for Foodpanda
-
-Run the following command to create an **Authorization Code** client:
-
-```bash
-php artisan passport:client
-```
-
-When prompted:
-
-1. **Which user ID should the client be assigned to?** — Enter `1` (or your admin user ID)
-2. **What should we name the client?** — Enter `Foodpanda SSO`
-3. **Where should we redirect the request after authorization?** — Enter `http://localhost:8001/callback`
-4. **Create a confidential client?** — Select `no` for a public client, or `yes` for confidential (recommended for backend)
-
-The command will output:
-
-- **Client ID** — Store this in `.env` as `FOODPANDA_CLIENT_ID`
-- **Client secret** (if confidential) — Store as `FOODPANDA_CLIENT_SECRET` (optional for this flow)
-
-**Where Client ID is stored**: In `.env` and accessed via `config('services.foodpanda.client_id')`.
-
----
-
-## PART 4 & 5 — Environment Configuration
-
-Add to `.env` and `.env.example`:
-
-```env
-FOODPANDA_CLIENT_ID=
-FOODPANDA_REDIRECT_URI=http://localhost:8001/callback
-```
-
-After running `php artisan passport:client`, paste the generated Client ID into `FOODPANDA_CLIENT_ID`.
-
----
-
-## PART 6 — SSORedirectController
-
-**Location**: `app/Http/Controllers/SSORedirectController.php`
-
-- Ensures user is authenticated (via `auth` middleware)
-- Builds OAuth authorize query: `client_id`, `redirect_uri`, `response_type=code`, `scope=`
-- Redirects to `/oauth/authorize?query_string`
-
----
-
-## PART 7 — Web Routes
-
-**File**: `routes/web.php`
-
-Includes default Breeze auth routes and:
-
-```php
-Route::get('/redirect-to-foodpanda', [SSORedirectController::class, 'redirect'])
-    ->middleware('auth')
-    ->name('redirect.foodpanda');
-```
-
----
-
-## PART 8 — Frontend Button
-
-**Location**: `resources/views/dashboard.blade.php`
-
-A "Go to Foodpanda" button links to `route('redirect.foodpanda')`. The dashboard is shown to authenticated users after login (Breeze default).
-
----
-
-## PART 9 — OAuth Flow (Step-by-Step)
-
-1. **User logs in to Ecommerce** — Uses Breeze login at `/login`. Session is created.
-2. **User clicks "Go to Foodpanda"** — Hits `/redirect-to-foodpanda` (protected by `auth`).
-3. **Redirect to `/oauth/authorize`** — SSORedirectController builds the URL with `client_id`, `redirect_uri`, `response_type=code`, `scope=` and redirects.
-4. **Passport shows authorization screen** — User approves access for the Foodpanda client.
-5. **Passport generates authorization code** — Short-lived code is created.
-6. **Redirect to Foodpanda callback** — User is sent to `http://localhost:8001/callback?code=XXX&state=...`
-7. **Foodpanda exchanges code for token** — Foodpanda backend sends `POST` to ecommerce `https://ecommerce-app/oauth/token` with:
-   - `grant_type=authorization_code`
-   - `client_id`
-   - `client_secret` (if confidential)
-   - `redirect_uri`
-   - `code`
-8. **Ecommerce returns access_token & refresh_token** — Foodpanda uses the access token to call ecommerce APIs (e.g. `/api/user`) and logs the user in locally.
+- **ecommerce-app** handles normal Laravel authentication (login/register)
+- Acts as OAuth2 Authorization Server
+- Issues authorization codes
+- Issues access tokens
+- Redirects authenticated user to foodpanda-app
 
 ---
 
@@ -154,35 +21,215 @@ ecommerce-app/
 ├── app/
 │   ├── Http/Controllers/
 │   │   ├── Api/
-│   │   │   └── UserController.php
-│   │   └── SSORedirectController.php
+│   │   │   └── UserController.php      # GET /api/user
+│   │   └── SSORedirectController.php   # Redirect to OAuth authorize
 │   ├── Models/
-│   │   └── User.php
+│   │   └── User.php                    # HasApiTokens trait
 │   └── Providers/
-│       └── AuthServiceProvider.php
+│       └── AuthServiceProvider.php     # Passport config
 ├── config/
-│   ├── auth.php
+│   ├── auth.php                        # api guard uses passport
 │   ├── passport.php
-│   └── services.php
+│   └── services.php                    # foodpanda client config
 ├── database/migrations/
-│   └── *_create_oauth_*_table.php
+│   └── 2016_06_01_*_create_oauth_*.php
 ├── resources/views/
-│   └── dashboard.blade.php
+│   └── dashboard.blade.php             # "Go to Foodpanda" button
 ├── routes/
-│   ├── api.php
-│   └── web.php
-└── ENV_FOODPANDA_ADDITIONS.txt
+│   ├── api.php                         # Protected GET /api/user
+│   └── web.php                         # /redirect-to-foodpanda
+├── ENV_EXAMPLE_ADDITIONS.txt           # Add to .env / .env.example
+└── SSO_IMPLEMENTATION.md               # This file
 ```
+
+---
+
+## STEP 1 — Install & Configure Passport
+
+### Artisan Commands
+
+```bash
+composer require laravel/passport
+php artisan vendor:publish --tag=passport-migrations
+php artisan migrate
+php artisan passport:install
+```
+
+### config/auth.php
+
+API guard uses Passport driver:
+
+```php
+'api' => [
+    'driver' => 'passport',
+    'provider' => 'users',
+],
+```
+
+### User Model
+
+```php
+use Laravel\Passport\HasApiTokens;
+
+class User extends Authenticatable
+{
+    use HasApiTokens, HasFactory, Notifiable;
+    // ...
+}
+```
+
+### AuthServiceProvider
+
+- Passport routes are **auto-registered** at `/oauth/*` (Passport 11+)
+- Token expiration:
+  - **Access token** → 1 hour
+  - **Refresh token** → 7 days
+
+---
+
+## STEP 2 — Protected API Route
+
+**File:** `routes/api.php`
+
+```php
+Route::middleware('auth:api')->get('/user', [UserController::class, 'show']);
+```
+
+- **URL:** `GET /api/user`
+- **Middleware:** `auth:api` (Passport)
+- **Returns:** Authenticated user JSON
+
+---
+
+## STEP 3 — Create OAuth Client
+
+Run:
+
+```bash
+php artisan passport:client
+```
+
+When prompted:
+
+1. **Which user ID should the client be assigned to?** — `1` (or admin user ID)
+2. **What should we name the client?** — `Foodpanda SSO`
+3. **Where should we redirect the request after authorization?** — `http://127.0.0.1:8001/callback`
+4. **Create a confidential client?** — `yes` (recommended) or `no` for public
+
+The command outputs:
+
+- **Client ID** (numeric, e.g. `3`) → Store in `.env` as `FOODPANDA_CLIENT_ID`
+- **Client secret** (long string) → Store as `FOODPANDA_CLIENT_SECRET` (used by foodpanda when exchanging code for token)
+
+**Important:** Use the **numeric Client ID** (e.g. `3`), NOT the Client Secret. Do not confuse them.
+
+**Usage:**  
+- **Client ID** is used in ecommerce-app's SSORedirectController and in foodpanda-app's token exchange request.  
+- **Client secret** is used only by foodpanda-app when calling `POST /oauth/token` to exchange the authorization code for tokens.
+
+---
+
+## STEP 4 — config/services.php
+
+```php
+'foodpanda' => [
+    'client_id' => env('FOODPANDA_CLIENT_ID'),
+    'redirect_uri' => env('FOODPANDA_REDIRECT_URI'),
+],
+```
+
+---
+
+## STEP 5 — .env Example
+
+Add to `.env` and `.env.example`:
+
+```env
+FOODPANDA_CLIENT_ID=
+FOODPANDA_REDIRECT_URI=http://127.0.0.1:8001/callback
+```
+
+After running `php artisan passport:client`, paste the generated Client ID into `FOODPANDA_CLIENT_ID`.
+
+See `ENV_EXAMPLE_ADDITIONS.txt` for the same content.
+
+---
+
+## STEP 6 — SSORedirectController
+
+**File:** `app/Http/Controllers/SSORedirectController.php`
+
+- Ensures user is authenticated (via `auth` middleware)
+- Builds OAuth authorize query: `client_id`, `redirect_uri`, `response_type=code`, `scope=`
+- Redirects to `/oauth/authorize?query_string`
+
+---
+
+## STEP 7 — routes/web.php
+
+```php
+use App\Http\Controllers\SSORedirectController;
+
+Route::middleware(['auth'])->group(function () {
+    Route::get('/redirect-to-foodpanda', [SSORedirectController::class, 'redirect'])
+        ->name('redirect.foodpanda');
+});
+```
+
+Default Laravel/Breeze auth routes remain in `auth.php`.
+
+---
+
+## STEP 8 — Dashboard Button
+
+**File:** `resources/views/dashboard.blade.php`
+
+Add a link/button:
+
+```html
+<a href="{{ route('redirect.foodpanda') }}" class="...">
+    Go to Foodpanda
+</a>
+```
+
+The dashboard is shown to authenticated users after login.
+
+---
+
+## STEP 9 — OAuth Flow (Step-by-Step)
+
+1. **User logs in to ecommerce-app** — Uses Breeze login at `/login`. Session is created.
+2. **User clicks "Go to Foodpanda"** — Requests `/redirect-to-foodpanda` (protected by `auth`).
+3. **Redirect to `/oauth/authorize`** — SSORedirectController builds the URL with `client_id`, `redirect_uri`, `response_type=code`, `scope=` and redirects.
+4. **Passport authorization screen** — User sees and approves access for the Foodpanda client.
+5. **Passport generates authorization code** — Short-lived code is created.
+6. **Redirect to Foodpanda callback** — User is sent to:
+   ```
+   http://127.0.0.1:8001/callback?code=XXXX&state=...
+   ```
+7. **Foodpanda exchanges code for token** — Foodpanda backend sends `POST` to:
+   ```
+   http://127.0.0.1:8000/oauth/token
+   ```
+   With:
+   - `grant_type=authorization_code`
+   - `client_id`
+   - `client_secret` (if confidential)
+   - `redirect_uri`
+   - `code`
+8. **Ecommerce returns tokens** — Response includes `access_token`, `refresh_token`, and `expires_in`.
+9. **Foodpanda uses access token** — Calls ecommerce APIs (e.g. `GET /api/user`) and logs the user in locally.
 
 ---
 
 ## Running the Ecommerce App
 
 ```bash
+cd ecommerce-app
 php artisan serve
 ```
 
-Default: `http://localhost:8000`
+Default: `http://127.0.0.1:8000`
 
 ---
 
@@ -191,9 +238,19 @@ Default: `http://localhost:8000`
 The **foodpanda-app** (separate Laravel project) must:
 
 1. Implement a callback route at `/callback` that receives `?code=...`
-2. Exchange the code for tokens via `POST /oauth/token` on the ecommerce-app
+2. Exchange the code for tokens via `POST http://127.0.0.1:8000/oauth/token`
 3. Store the access token and use it for API calls
 4. Create a local session/user based on the authenticated user from ecommerce
 
 Both apps remain independent Laravel applications; ecommerce is the Authorization Server, foodpanda is the OAuth Client.
 
+---
+
+## Troubleshooting
+
+### "Data truncated for column 'client_id'" error
+
+This occurred when `FOODPANDA_CLIENT_ID` was set to a long string (e.g. the Client Secret). A migration has been added to support string client IDs. For correct behavior:
+
+1. Use the **numeric Client ID** from `php artisan passport:client` (e.g. `3` for Foodpanda SSO).
+2. In `.env`: `FOODPANDA_CLIENT_ID=3` (replace `3` with your actual client ID from the `oauth_clients` table).

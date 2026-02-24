@@ -1,0 +1,10 @@
+# ---------------------------------------------------------------------------
+# SSO - Foodpanda OAuth2 Client (add these to .env and .env.example)
+# ---------------------------------------------------------------------------
+# Run: php artisan passport:client
+# - Name: Foodpanda SSO
+# - Redirect: http://127.0.0.1:8001/callback
+# Use the NUMERIC Client ID (e.g. 3), NOT the Client Secret.
+FOODPANDA_CLIENT_ID=3
+FOODPANDA_REDIRECT_URI=http://127.0.0.1:8001/callback
+
