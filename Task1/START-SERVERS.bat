@@ -8,14 +8,17 @@ echo  Foodpanda App  -^>  http://127.0.0.1:8001
 echo ================================================
 echo.
 
-echo [*] Stopping any existing PHP servers...
-taskkill /F /IM php.exe >nul 2>&1
+REM Kill only the Task1 servers (ports 8000 and 8001), NOT all php.exe
+REM This prevents killing Task2 (port 8002) or any other PHP process
+echo [*] Freeing ports 8000 and 8001...
+for /f "tokens=5" %%a in ('netstat -ano ^| findstr ":8000 " ^| findstr LISTENING') do taskkill /F /PID %%a >nul 2>&1
+for /f "tokens=5" %%a in ('netstat -ano ^| findstr ":8001 " ^| findstr LISTENING') do taskkill /F /PID %%a >nul 2>&1
 timeout /t 2 /nobreak >nul
 
 echo [*] Starting Ecommerce App on port 8000...
 start "Ecommerce App :8000" /D "C:\xampp\htdocs\ZaviSoft_TASK\Task1\ecommerce-app" C:\xampp\php\php.exe artisan serve --host=127.0.0.1 --port=8000
 
-timeout /t 2 /nobreak >nul
+timeout /t 3 /nobreak >nul
 
 echo [*] Starting Foodpanda App on port 8001...
 start "Foodpanda App :8001" /D "C:\xampp\htdocs\ZaviSoft_TASK\Task1\foodpanda-app" C:\xampp\php\php.exe artisan serve --host=127.0.0.1 --port=8001
@@ -28,6 +31,8 @@ echo  READY! Both servers running.
 echo.
 echo  [Ecommerce]  http://127.0.0.1:8000
 echo  [Foodpanda]  http://127.0.0.1:8001
+echo.
+echo  Task 2 (Inventory) is separate at port 8002
 echo.
 echo  Demo Login:  admin@ecommerce.test / password
 echo.
