@@ -8,19 +8,13 @@
         "php": "^8.1",
         "guzzlehttp/guzzle": "^7.2",
         "laravel/framework": "^10.10",
-<<<<<<< HEAD
-=======
         "laravel/passport": "^12.4",
->>>>>>> 10c2979b2be322958648dcb15add19f1013cb4ff
         "laravel/sanctum": "^3.3",
         "laravel/tinker": "^2.8"
     },
     "require-dev": {
         "fakerphp/faker": "^1.9.1",
-<<<<<<< HEAD
-=======
         "laravel/breeze": "^1.29",
->>>>>>> 10c2979b2be322958648dcb15add19f1013cb4ff
         "laravel/pint": "^1.0",
         "laravel/sail": "^1.18",
         "mockery/mockery": "^1.4.4",

@@ -40,14 +40,11 @@ return [
             'driver' => 'session',
             'provider' => 'users',
         ],
-<<<<<<< HEAD
-=======
 
         'api' => [
-            'driver' => 'passport',
+            'driver' => 'sanctum',
             'provider' => 'users',
         ],
->>>>>>> 10c2979b2be322958648dcb15add19f1013cb4ff
     ],
 
     /*

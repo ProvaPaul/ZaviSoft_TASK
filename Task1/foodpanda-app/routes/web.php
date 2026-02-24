@@ -1,10 +1,7 @@
 <?php
 
-<<<<<<< HEAD
-=======
 use App\Http\Controllers\ProfileController;
-use App\Http\Controllers\SSORedirectController;
->>>>>>> 10c2979b2be322958648dcb15add19f1013cb4ff
+use App\Http\Controllers\SSOCallbackController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -21,21 +18,19 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', function () {
     return view('welcome');
 });
-<<<<<<< HEAD
-=======
+
+// SSO Callback — receives authorization code from ecommerce-app Passport
+Route::get('/callback', [SSOCallbackController::class, 'handle'])->name('sso.callback');
 
 Route::get('/dashboard', function () {
     return view('dashboard');
 })->middleware(['auth', 'verified'])->name('dashboard');
 
 Route::middleware('auth')->group(function () {
-    Route::get('/redirect-to-foodpanda', [SSORedirectController::class, 'redirect'])
-        ->name('redirect.foodpanda');
-
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
 require __DIR__.'/auth.php';
->>>>>>> 10c2979b2be322958648dcb15add19f1013cb4ff
+
