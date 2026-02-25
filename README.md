@@ -63,6 +63,5 @@ php artisan serve
 
 ---
 
-**Links:** Ecommerce http://127.0.0.1:8000 | Foodpanda http://127.0.0.1:8001 | Inventory http://127.0.0.1:8002
 
 **Tech:** Laravel 10 · PHP 8.2 · MySQL · Passport · Tailwind · Bootstrap 5 · Blade · Vite
