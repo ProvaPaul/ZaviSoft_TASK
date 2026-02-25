@@ -63,5 +63,9 @@ php artisan serve
 
 ---
 
-
 **Tech:** Laravel 10 · PHP 8.2 · MySQL · Passport · Tailwind · Bootstrap 5 · Blade · Vite
+
+## 🌐 Deployment Status
+
+Currently, a live demo link is not available because most Laravel-compatible hosting services with OAuth2 Passport and proper server configuration are paid. As a student, I do not have access to a paid hosting plan at the moment.
+Please refer to the demo videos above to see the complete working system, including authentication flow, SSO process, accounting logic, and reporting features.
