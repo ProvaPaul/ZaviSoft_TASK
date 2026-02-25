@@ -10,7 +10,15 @@
 - **foodpanda-app** (Port 8001) — OAuth2 Client
 
 **SSO Flow:** Login at Ecommerce → Click "Go to Foodpanda" → Auth code exchanged for token → Auto-login. Logout from Foodpanda redirects back to Ecommerce.
+## 🎥 Project Demo
 
+<h2 align="center">🎬 Task 1 – Project VIDEO</h2>
+
+<p align="center">
+  <a href="https://youtu.be/FK4RAzQvzto">
+    <img src="https://img.youtube.com/vi/FK4RAzQvzto/0.jpg" width="700">
+  </a>
+</p>
 ### Setup
 
 ```bash
@@ -30,8 +38,14 @@ php artisan migrate && php artisan serve
 
 ---
 
-## Task 2: Inventory Management (Port 8002)
+## Task 2: Inventory Management 
+<h2 align="center">🎬 Task 2 – Inventory Management System Project VIDEO</h2>
 
+<p align="center">
+  <a href="https://youtu.be/v_WujjnKLb4">
+    <img src="https://img.youtube.com/vi/v_WujjnKLb4/0.jpg" width="700">
+  </a>
+</p>
 - Product CRUD (Create, Read, Update, Delete)
 - Sales with Discount & VAT calculation
 - Double-Entry Accounting (Journal Entries — balanced debits & credits)
